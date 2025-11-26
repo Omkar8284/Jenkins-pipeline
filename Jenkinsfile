@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     environment {
         DEPLOY_USER   = "omkar"
         NODES         = "192.168.152.129"
@@ -7,11 +8,11 @@ pipeline {
         CURRENT_DIR   = "/var/www/prod/current"
         SSH_KEY       = "jenkins-ssh"
     }
+
     stages {
+
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Validate') {
@@ -29,7 +30,7 @@ pipeline {
                   cp index.html build/
                   cd build
                   tar -czf site-$TIMESTAMP.tgz index.html
-                  echo $TIMESTAMP > release_id
+                  echo $TIMESTAMP > ../build/release_id
                 '''
             }
         }
@@ -45,8 +46,8 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@$node "
                           mkdir -p ${RELEASE_DIR}/$RELEASE_ID &&
                           tar -xzf ${RELEASE_DIR}/site-$RELEASE_ID.tgz -C ${RELEASE_DIR}/$RELEASE_ID &&
-                          rm -f ${CURRENT_DIR} &&
-                          ln -s ${RELEASE_DIR}/$RELEASE_ID ${CURRENT_DIR} &&
+                          sudo rm -rf ${CURRENT_DIR} &&
+                          sudo ln -s ${RELEASE_DIR}/$RELEASE_ID ${CURRENT_DIR} &&
                           sudo systemctl reload nginx
                         "
                       done
@@ -57,7 +58,12 @@ pipeline {
 
         stage('Healthcheck') {
             steps {
-                sh 'for node in ${NODES}; do curl -sSf http://$node:8080/ || (echo "healthcheck failed for $node" && exit 1); done'
+                sh '''
+                  for node in ${NODES}; do
+                    curl -sSf http://$node:8080/ \
+                    || (echo "healthcheck failed for $node" && exit 1);
+                  done
+                '''
             }
         }
     }
