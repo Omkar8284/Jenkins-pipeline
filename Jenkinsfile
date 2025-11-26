@@ -30,7 +30,7 @@ pipeline {
                   cp index.html build/
                   cd build
                   tar -czf site-$TIMESTAMP.tgz index.html
-                  echo $TIMESTAMP > ../build/release_id
+                  echo $TIMESTAMP > release_id
                 '''
             }
         }
@@ -44,10 +44,10 @@ pipeline {
                         echo "Deploying to $node ..."
                         scp -o StrictHostKeyChecking=no build/site-$RELEASE_ID.tgz ${DEPLOY_USER}@$node:${RELEASE_DIR}/
                         ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@$node "
-                          mkdir -p ${RELEASE_DIR}/$RELEASE_ID &&
-                          tar -xzf ${RELEASE_DIR}/site-$RELEASE_ID.tgz -C ${RELEASE_DIR}/$RELEASE_ID &&
-                          sudo rm -rf ${CURRENT_DIR} &&
-                          sudo ln -s ${RELEASE_DIR}/$RELEASE_ID ${CURRENT_DIR} &&
+                          mkdir -p ${RELEASE_DIR}/$RELEASE_ID && \
+                          tar -xzf ${RELEASE_DIR}/site-$RELEASE_ID.tgz -C ${RELEASE_DIR}/$RELEASE_ID && \
+                          sudo rm -rf ${CURRENT_DIR} && \
+                          sudo ln -s ${RELEASE_DIR}/$RELEASE_ID ${CURRENT_DIR} && \
                           sudo systemctl reload nginx
                         "
                       done
